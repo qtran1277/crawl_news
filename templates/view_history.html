@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem lịch sử tìm kiếm</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+        }
+        
+        .history-sidebar {
+            height: 100vh;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            transition: transform 0.3s ease-in-out;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            width: 300px;
+        }
+        
+        .history-sidebar.collapsed {
+            transform: translateX(-300px);
+        }
+
+        .history-toggle {
+            position: fixed;
+            left: 300px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1001;
+            background: #0d6efd;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            transition: left 0.3s ease-in-out;
+        }
+
+        .history-toggle.collapsed {
+            left: 0;
+        }
+
+        .main-content {
+            position: relative;
+            padding-left: 300px;
+            width: 100%;
+            transition: padding-left 0.3s ease-in-out;
+        }
+
+        .main-content.expanded {
+            padding-left: 0;
+        }
+        
+        .news-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        
+        .news-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+            padding-top: 3rem;
+        }
+        
+        .sentiment-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 500;
+            z-index: 1;
+        }
+        
+        .sentiment-positive {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+        
+        .sentiment-neutral {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+            border: 1px solid #6c757d;
+        }
+        
+        .sentiment-negative {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+        
+        .source-date {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+        
+        .sentiment-chart {
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+            height: 300px;
+        }
+        
+        .column-header {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .column-header i {
+            font-size: 1.2em;
+        }
+        
+        .column-header.positive {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+        
+        .column-header.neutral {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+        }
+        
+        .column-header.negative {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-right: 60px;
+        }
+        
+        .card-text {
+            font-size: 0.9rem;
+            color: #495057;
+        }
+        
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+        
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- History Sidebar -->
+    <div class="history-sidebar" id="historySidebar">
+        <h4 class="mb-4">Lịch sử tìm kiếm</h4>
+        <div class="list-group">
+            {% for item in history %}
+            <a href="{{ url_for('view_history', search_id=item.id) }}" 
+               class="list-group-item list-group-item-action {% if item.id == current_search_id %}active{% endif %}">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">{{ item.search_term }}</h6>
+                    <small>{{ item.search_time.strftime('%d/%m/%Y %H:%M') }}</small>
+                </div>
+                <small>{{ item.articles|length }} kết quả</small>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Toggle Button -->
+    <button class="history-toggle" id="historyToggle">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="container mt-5">
+            <div class="row mb-4">
+                <div class="col">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h1 class="mb-0">Kết quả tìm kiếm</h1>
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sentiment Distribution Chart -->
+            <div class="row mb-4">
+                <div class="col-md-8 mx-auto">
+                    <div class="chart-container">
+                        <h5 class="card-title text-center mb-4">Phân bố cảm xúc</h5>
+                        <div class="sentiment-chart">
+                            <canvas id="sentimentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- News Results -->
+            <div class="row">
+                <!-- Positive News Column -->
+                <div class="col-md-4">
+                    <div class="column-header positive">
+                        <i class="fas fa-smile"></i>
+                        <h4 class="mb-0">Tích cực</h4>
+                    </div>
+                    {% for article in results %}
+                        {% if article.sentiment == 'positive' %}
+                        <div class="card news-card mb-3">
+                            <div class="card-body">
+                                <span class="sentiment-badge sentiment-positive">
+                                    {{ "%.1f"|format(article.sentiment_score) }}
+                                </span>
+                                <h5 class="card-title">{{ article.title }}</h5>
+                                <p class="card-text">{{ article.description }}</p>
+                                <div class="source-date mb-3">
+                                    <i class="fas fa-newspaper"></i> {{ article.source }}
+                                    <span class="mx-2">•</span>
+                                    <i class="far fa-clock"></i> {{ article.date }}
+                                </div>
+                                <a href="{{ article.link }}" target="_blank" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-external-link-alt"></i> Đọc thêm
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <!-- Neutral News Column -->
+                <div class="col-md-4">
+                    <div class="column-header neutral">
+                        <i class="fas fa-meh"></i>
+                        <h4 class="mb-0">Trung lập</h4>
+                    </div>
+                    {% for article in results %}
+                        {% if article.sentiment == 'neutral' %}
+                        <div class="card news-card mb-3">
+                            <div class="card-body">
+                                <span class="sentiment-badge sentiment-neutral">
+                                    {{ "%.1f"|format(article.sentiment_score) }}
+                                </span>
+                                <h5 class="card-title">{{ article.title }}</h5>
+                                <p class="card-text">{{ article.description }}</p>
+                                <div class="source-date mb-3">
+                                    <i class="fas fa-newspaper"></i> {{ article.source }}
+                                    <span class="mx-2">•</span>
+                                    <i class="far fa-clock"></i> {{ article.date }}
+                                </div>
+                                <a href="{{ article.link }}" target="_blank" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-external-link-alt"></i> Đọc thêm
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <!-- Negative News Column -->
+                <div class="col-md-4">
+                    <div class="column-header negative">
+                        <i class="fas fa-frown"></i>
+                        <h4 class="mb-0">Tiêu cực</h4>
+                    </div>
+                    {% for article in results %}
+                        {% if article.sentiment == 'negative' %}
+                        <div class="card news-card mb-3">
+                            <div class="card-body">
+                                <span class="sentiment-badge sentiment-negative">
+                                    {{ "%.1f"|format(article.sentiment_score) }}
+                                </span>
+                                <h5 class="card-title">{{ article.title }}</h5>
+                                <p class="card-text">{{ article.description }}</p>
+                                <div class="source-date mb-3">
+                                    <i class="fas fa-newspaper"></i> {{ article.source }}
+                                    <span class="mx-2">•</span>
+                                    <i class="far fa-clock"></i> {{ article.date }}
+                                </div>
+                                <a href="{{ article.link }}" target="_blank" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-external-link-alt"></i> Đọc thêm
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div id="results-data" data-results='{{ results|tojson|safe }}'></div>
+    <script src="{{ url_for('static', filename='js/history.js') }}"></script>
+</body>
+</html> 

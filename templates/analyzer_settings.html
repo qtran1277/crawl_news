@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-online {
+            background-color: #28a745;
+        }
+        .status-offline {
+            background-color: #dc3545;
+        }
+        .analyzer-card {
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .analyzer-card:hover {
+            border-color: #0d6efd;
+            box-shadow: 0 0 10px rgba(13, 110, 253, 0.2);
+        }
+        .analyzer-card.selected {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="text-center">Cài đặt Analyzer</h1>
+                <p class="text-center text-muted">Chọn phương thức phân tích cảm xúc cho tin tức</p>
+            </div>
+        </div>
+
+        <form action="{{ url_for('save_analyzer_settings') }}" method="POST">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <!-- OpenAI Analyzer -->
+                    <div class="analyzer-card {% if current_analyzer == 'openai' %}selected{% endif %}">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="analyzer_type" 
+                                   id="openaiAnalyzer" value="openai" 
+                                   {% if current_analyzer == 'openai' %}checked{% endif %}>
+                            <label class="form-check-label" for="openaiAnalyzer">
+                                <h4>
+                                    <i class="fab fa-openai me-2"></i>
+                                    OpenAI Analyzer
+                                    <span class="status-indicator {% if openai_status %}status-online{% else %}status-offline{% endif %}"></span>
+                                </h4>
+                            </label>
+                        </div>
+                        <p class="text-muted ms-4">Sử dụng OpenAI API để phân tích cảm xúc</p>
+                        <div class="ms-4">
+                            <span class="badge {% if openai_status %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ 'Đang hoạt động' if openai_status else 'Không hoạt động' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Local LM Studio Analyzer -->
+                    <div class="analyzer-card {% if current_analyzer == 'local' %}selected{% endif %}">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="analyzer_type" 
+                                   id="localAnalyzer" value="local"
+                                   {% if current_analyzer == 'local' %}checked{% endif %}>
+                            <label class="form-check-label" for="localAnalyzer">
+                                <h4>
+                                    <i class="fas fa-desktop me-2"></i>
+                                    Local LM Studio Analyzer
+                                    <span class="status-indicator {% if local_status %}status-online{% else %}status-offline{% endif %}"></span>
+                                </h4>
+                            </label>
+                        </div>
+                        <p class="text-muted ms-4">Sử dụng LM Studio cục bộ để phân tích cảm xúc</p>
+                        <div class="ms-4">
+                            <span class="badge {% if local_status %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ 'Đang hoạt động' if local_status else 'Không hoạt động' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Lưu cài đặt
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Highlight selected analyzer card
+        document.querySelectorAll('input[name="analyzer_type"]').forEach(input => {
+            input.addEventListener('change', function() {
+                document.querySelectorAll('.analyzer-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                this.closest('.analyzer-card').classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html> 

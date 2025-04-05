@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm kiếm tin tức</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            cursor: wait;
+            pointer-events: all;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .loading-active {
+            pointer-events: none;
+            user-select: none;
+            opacity: 0.7;
+        }
+        
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #0d6efd;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-text {
+            color: white;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .history-sidebar {
+            height: 100vh;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            transition: transform 0.3s ease-in-out;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            width: 300px;
+        }
+        
+        .history-sidebar.collapsed {
+            transform: translateX(-300px);
+        }
+
+        .history-toggle {
+            position: fixed;
+            left: 300px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1001;
+            background: #0d6efd;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            transition: left 0.3s ease-in-out;
+        }
+
+        .history-toggle.collapsed {
+            left: 0;
+        }
+
+        .main-content {
+            position: relative;
+            padding-left: 300px;
+            width: 100%;
+            transition: padding-left 0.3s ease-in-out;
+        }
+
+        .main-content.expanded {
+            padding-left: 0;
+        }
+
+        .main-content .container {
+            max-width: 100%;
+            padding: 0 30px;
+        }
+        
+        .history-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .history-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .history-item.active {
+            border-left: 4px solid #0d6efd;
+        }
+        
+        .sentiment-stat {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .sentiment-stat i {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .sentiment-stat.positive {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+        
+        .sentiment-stat.neutral {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+        }
+        
+        .sentiment-stat.negative {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .settings-buttons {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+        }
+
+        .settings-buttons .btn {
+            margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .history-sidebar {
+                width: 100%;
+                transform: translateX(-100%);
+            }
+            .history-toggle {
+                left: 0;
+            }
+            .main-content {
+                padding-left: 0;
+            }
+            .main-content .container {
+                padding: 0 15px;
+            }
+            .settings-buttons {
+                position: static;
+                text-align: right;
+                margin-bottom: 20px;
+            }
+        }
+
+        .news-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        
+        .news-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+            padding-top: 3rem;
+        }
+        
+        .sentiment-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 500;
+            z-index: 1;
+        }
+        
+        .sentiment-positive {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+        
+        .sentiment-neutral {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+            border: 1px solid #6c757d;
+        }
+        
+        .sentiment-negative {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+        
+        .source-date {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-right: 60px;
+        }
+        
+        .card-text {
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        .column-header {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .column-header i {
+            font-size: 1.5em;
+        }
+
+        .column-header.positive {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .column-header.neutral {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+        }
+
+        .column-header.negative {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .sentiment-chart {
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-online {
+            background-color: #28a745;
+        }
+        .status-offline {
+            background-color: #dc3545;
+        }
+        .analyzer-card {
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .analyzer-card:hover {
+            border-color: #0d6efd;
+            box-shadow: 0 0 10px rgba(13, 110, 253, 0.2);
+        }
+        .analyzer-card.selected {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Đang xử lý tìm kiếm...</div>
+    </div>
+
+    <!-- History Toggle Button -->
+    <button class="history-toggle" id="historyToggle">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- History Sidebar -->
+            <div class="history-sidebar" id="historySidebar">
+                <h4 class="mb-4">Lịch sử tìm kiếm</h4>
+                <!-- Search History -->
+                <div class="list-group mb-4">
+                    {% for item in history %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('view_history', search_id=item.id) }}" class="text-decoration-none">
+                            <div>
+                                <strong>{{ item.search_term }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="far fa-calendar"></i> {{ item.search_time.strftime('%d/%m/%Y') }}
+                                    <i class="far fa-clock ms-2"></i> {{ item.search_time.strftime('%H:%M:%S') }}
+                                </small>
+                            </div>
+                        </a>
+                        <a href="{{ url_for('delete_history', search_id=item.id) }}" 
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Bạn có chắc muốn xóa mục này?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 main-content">
+                <div class="container mt-5">
+                    <div class="settings-buttons">
+                        <a href="{{ url_for('settings') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog"></i> Cài đặt API
+                        </a>
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#analyzerSettingsModal">
+                            <i class="fas fa-robot"></i> Cài đặt Analyzer
+                        </button>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col">
+                            <h1 class="text-center">Tìm kiếm tin tức</h1>
+                        </div>
+                    </div>
+                    
+                    <form id="searchForm" class="mb-4">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="searchQuery" name="query" 
+                                   placeholder="Nhập từ khóa tìm kiếm..." required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i> Tìm kiếm
+                            </button>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="timeFilter">Thời gian:</label>
+                                    <select class="form-select" id="timeFilter" name="time_filter">
+                                        <option value="all">Tất cả</option>
+                                        <option value="1h">1 giờ qua</option>
+                                        <option value="1d">24 giờ qua</option>
+                                        <option value="7d">7 ngày qua</option>
+                                        <option value="1m">30 ngày qua</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="maxResults">Số kết quả tối đa:</label>
+                                    <input type="number" class="form-control" id="maxResults" 
+                                           name="max_results" value="20" min="1" max="100">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Results Section -->
+                    <div id="resultsSection" style="display: none;">
+                        <div class="mb-4">
+                            <h3>Kết quả tìm kiếm</h3>
+                            <div id="resultStats" class="text-muted mb-3"></div>
+                        </div>
+
+                        <!-- Sentiment Distribution -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title text-center">Phân bố cảm xúc</h5>
+                                <div class="sentiment-chart">
+                                    <canvas id="sentimentChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- News Results -->
+                        <div id="searchResults" class="row">
+                            <!-- Positive News Column -->
+                            <div class="col-md-4">
+                                <div class="column-header positive">
+                                    <i class="fas fa-smile"></i>
+                                    <h4 class="mb-0">Tích cực</h4>
+                                </div>
+                                <div id="positiveResults"></div>
+                            </div>
+
+                            <!-- Neutral News Column -->
+                            <div class="col-md-4">
+                                <div class="column-header neutral">
+                                    <i class="fas fa-meh"></i>
+                                    <h4 class="mb-0">Trung lập</h4>
+                                </div>
+                                <div id="neutralResults"></div>
+                            </div>
+
+                            <!-- Negative News Column -->
+                            <div class="col-md-4">
+                                <div class="column-header negative">
+                                    <i class="fas fa-frown"></i>
+                                    <h4 class="mb-0">Tiêu cực</h4>
+                                </div>
+                                <div id="negativeResults"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analyzer Settings Modal -->
+    <div class="modal fade" id="analyzerSettingsModal" tabindex="-1" aria-labelledby="analyzerSettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="analyzerSettingsModalLabel">Cài đặt Analyzer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="analyzerSettingsForm">
+                        <!-- OpenAI Analyzer -->
+                        <div class="analyzer-card mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="analyzer_type" 
+                                       id="openaiAnalyzer" value="openai" 
+                                       {% if current_analyzer == 'openai' %}checked{% endif %}>
+                                <label class="form-check-label" for="openaiAnalyzer">
+                                    <h5 class="mb-0">
+                                        <i class="fab fa-openai me-2"></i>
+                                        OpenAI Analyzer
+                                        <span class="status-indicator {% if openai_status %}status-online{% else %}status-offline{% endif %}"></span>
+                                    </h5>
+                                </label>
+                            </div>
+                            <p class="text-muted ms-4 mb-2">Sử dụng OpenAI API để phân tích cảm xúc</p>
+                            <div class="ms-4">
+                                <span class="badge {% if openai_status %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ 'Đang hoạt động' if openai_status else 'Không hoạt động' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Local LM Studio Analyzer -->
+                        <div class="analyzer-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="analyzer_type" 
+                                       id="localAnalyzer" value="local"
+                                       {% if current_analyzer == 'local' %}checked{% endif %}>
+                                <label class="form-check-label" for="localAnalyzer">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-desktop me-2"></i>
+                                        Local LM Studio Analyzer
+                                        <span class="status-indicator {% if local_status %}status-online{% else %}status-offline{% endif %}"></span>
+                                    </h5>
+                                </label>
+                            </div>
+                            <p class="text-muted ms-4 mb-2">Sử dụng LM Studio cục bộ để phân tích cảm xúc</p>
+                            <div class="ms-4">
+                                <span class="badge {% if local_status %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ 'Đang hoạt động' if local_status else 'Không hoạt động' }}
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAnalyzerSettings()">
+                        <i class="fas fa-save"></i> Lưu cài đặt
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    // Sidebar toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        var historyToggle = document.getElementById('historyToggle');
+        var historySidebar = document.getElementById('historySidebar');
+        var mainContent = document.querySelector('.main-content');
+        var searchForm = document.getElementById('searchForm');
+        var loadingOverlay = document.getElementById('loadingOverlay');
+        var resultsSection = document.getElementById('resultsSection');
+        var searchResults = document.getElementById('searchResults');
+        var resultStats = document.getElementById('resultStats');
+        var sentimentChart = null;
+
+        // Lấy analyzer type từ localStorage nếu có
+        const savedAnalyzerType = localStorage.getItem('analyzerType');
+        if (savedAnalyzerType) {
+            // Tìm radio button tương ứng và đánh dấu là đã chọn
+            const radioButton = document.querySelector(`input[name="analyzer_type"][value="${savedAnalyzerType}"]`);
+            if (radioButton) {
+                radioButton.checked = true;
+                // Highlight card tương ứng
+                document.querySelectorAll('.analyzer-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                radioButton.closest('.analyzer-card').classList.add('selected');
+            }
+        }
+
+        function toggleSidebar() {
+            historySidebar.classList.toggle('collapsed');
+            historyToggle.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+            
+            // Update toggle button icon
+            var icon = historyToggle.querySelector('i');
+            if (historySidebar.classList.contains('collapsed')) {
+                icon.classList.remove('fa-chevron-left');
+                icon.classList.add('fa-chevron-right');
+            } else {
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-left');
+            }
+        }
+
+        // Add click event listener
+        historyToggle.addEventListener('click', toggleSidebar);
+
+        // Form submit handler
+        searchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const query = document.getElementById('searchQuery').value;
+            const timeFilter = document.getElementById('timeFilter').value;
+            const maxResults = document.getElementById('maxResults').value;
+            
+            // Lấy analyzer type từ radio button đã chọn
+            const analyzerTypeInput = document.querySelector('input[name="analyzer_type"]:checked');
+            const analyzerType = analyzerTypeInput ? analyzerTypeInput.value : 'openai';
+            
+            // Hiển thị loading overlay
+            loadingOverlay.style.display = 'flex';
+            
+            fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: query,
+                    time_filter: timeFilter,
+                    max_results: maxResults,
+                    analyzer_type: analyzerType
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                displayResults(data.results);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi tìm kiếm');
+            })
+            .finally(() => {
+                // Ẩn loading overlay
+                loadingOverlay.style.display = 'none';
+            });
+        });
+
+        function displayResults(results) {
+            // Show results section
+            resultsSection.style.display = 'block';
+            
+            // Update stats
+            resultStats.textContent = `Tìm thấy ${results.length} kết quả`;
+            
+            // Clear previous results
+            document.getElementById('positiveResults').innerHTML = '';
+            document.getElementById('neutralResults').innerHTML = '';
+            document.getElementById('negativeResults').innerHTML = '';
+            
+            // Update sentiment chart
+            if (sentimentChart) {
+                sentimentChart.destroy();
+            }
+            
+            var ctx = document.getElementById('sentimentChart').getContext('2d');
+            
+            // Chuẩn bị dữ liệu cho biểu đồ
+            var dates = results.map(r => r.date ? r.date.toString() : '');
+            var scores = results.map(r => parseFloat(r.sentiment_score) || 0);
+            var colors = results.map(r => {
+                if (r.sentiment === 'positive') return 'rgba(40, 167, 69, 0.7)';
+                if (r.sentiment === 'negative') return 'rgba(220, 53, 69, 0.7)';
+                return 'rgba(108, 117, 125, 0.7)';
+            });
+            
+            // Tạo biểu đồ
+            sentimentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Điểm sentiment',
+                        data: scores,
+                        backgroundColor: colors,
+                        borderColor: colors.map(color => color.replace('0.7', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Điểm sentiment'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Ngày tháng'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    var result = results[context.dataIndex];
+                                    return [
+                                        `Tiêu đề: ${result.title}`,
+                                        `Điểm: ${result.sentiment_score}`,
+                                        `Cảm xúc: ${result.sentiment}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Hiển thị kết quả theo sentiment
+            results.forEach(result => {
+                var cardHtml = `
+                    <div class="card news-card mb-3">
+                        <div class="card-body">
+                            <span class="sentiment-badge sentiment-${result.sentiment}">
+                                ${parseFloat(result.sentiment_score).toFixed(1)}
+                            </span>
+                            <h5 class="card-title">${result.title}</h5>
+                            <p class="card-text">${result.description}</p>
+                            <div class="source-date mb-3">
+                                <i class="fas fa-newspaper"></i> ${result.source}
+                                <span class="mx-2">•</span>
+                                <i class="far fa-clock"></i> ${result.date}
+                            </div>
+                            <a href="${result.link}" target="_blank" class="btn btn-primary btn-sm">
+                                <i class="fas fa-external-link-alt"></i> Đọc thêm
+                            </a>
+                        </div>
+                    </div>
+                `;
+                
+                // Thêm vào cột tương ứng
+                document.getElementById(result.sentiment + 'Results').innerHTML += cardHtml;
+            });
+        }
+    });
+
+    // Highlight selected analyzer card
+    document.querySelectorAll('input[name="analyzer_type"]').forEach(input => {
+        input.addEventListener('change', function() {
+            document.querySelectorAll('.analyzer-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            this.closest('.analyzer-card').classList.add('selected');
+            
+            // Lưu lựa chọn vào localStorage
+            localStorage.setItem('analyzerType', this.value);
+        });
+    });
+
+    // Save analyzer settings
+    function saveAnalyzerSettings() {
+        const form = document.getElementById('analyzerSettingsForm');
+        const formData = new FormData(form);
+        
+        // Lưu lựa chọn vào localStorage
+        const selectedAnalyzer = form.querySelector('input[name="analyzer_type"]:checked');
+        if (selectedAnalyzer) {
+            localStorage.setItem('analyzerType', selectedAnalyzer.value);
+        }
+        
+        fetch('/save_analyzer_settings', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('analyzerSettingsModal'));
+                modal.hide();
+                
+                // Reload page to apply changes
+                window.location.reload();
+            } else {
+                alert('Có lỗi xảy ra khi lưu cài đặt');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi lưu cài đặt');
+        });
+    }
+    </script>
+</body>
+</html> 

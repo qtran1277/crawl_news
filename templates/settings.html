@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt API</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .api-key-input {
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+        .api-key-input::-webkit-input-placeholder {
+            font-family: system-ui, -apple-system, sans-serif;
+            letter-spacing: normal;
+        }
+        .api-key-input::-moz-placeholder {
+            font-family: system-ui, -apple-system, sans-serif;
+            letter-spacing: normal;
+        }
+        .api-key-input:-ms-input-placeholder {
+            font-family: system-ui, -apple-system, sans-serif;
+            letter-spacing: normal;
+        }
+        .api-key-input::placeholder {
+            font-family: system-ui, -apple-system, sans-serif;
+            letter-spacing: normal;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1>Cài đặt API</h1>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">OpenAI API Key</h5>
+                        <p class="card-text text-muted">
+                            Nhập API key của OpenAI để sử dụng dịch vụ phân tích cảm xúc.
+                            Bạn có thể lấy API key tại 
+                            <a href="https://platform.openai.com/api-keys" target="_blank">
+                                platform.openai.com/api-keys
+                            </a>
+                        </p>
+
+                        <form action="{{ url_for('save_settings') }}" method="POST">
+                            <div class="mb-3">
+                                <label for="api_key" class="form-label">OpenAI API Key</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="api_key" name="api_key" 
+                                           value="{{ api_key[:20] + '...' if api_key else '' }}" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <a href="https://platform.openai.com/account/api-keys" target="_blank">
+                                        Lấy API key tại đây
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Lưu cài đặt
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var apiKeyInput = document.getElementById('api_key');
+            var toggleButton = document.getElementById('togglePassword');
+            var icon = toggleButton.querySelector('i');
+
+            toggleButton.addEventListener('click', function() {
+                if (apiKeyInput.type === 'password') {
+                    apiKeyInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    apiKeyInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,182 @@
+[
+  {
+    "title": "Taxi Mai Linh thuê, mua 3.999 ôtô điện VinFast",
+    "description": "Taxi Mai Linh thuê, mua 3.999 ôtô điện VinFast. Tập đoàn Mai Linh ký hợp tác với Xanh SM, đầu tư gần 3.999 xe điện VinFast từ nay đến cuối 2025,...",
+    "link": "https://vnexpress.net/taxi-mai-linh-thue-mua-3-999-oto-dien-vinfast-4825221.html",
+    "source": "VnExpress",
+    "date": "8 thg 12, 2024",
+    "sentiment": "positive",
+    "sentiment_score": 0.6
+  },
+  {
+    "title": "Taxi Mai Linh mua và thuê 3.999 ô tô điện VinFast từ GSM để chuyển đổi xanh",
+    "description": "Taxi Mai Linh mua và thuê 3.999 ô tô điện VinFast từ GSM để chuyển đổi xanh. Ngày 6-12, Tập đoàn Mai Linh chính thức ký kết hợp tác với Xanh SM,...",
+    "link": "https://www.qdnd.vn/kinh-te/cac-van-de/taxi-mai-linh-mua-va-thue-3-999-o-to-dien-vinfast-tu-gsm-de-chuyen-doi-xanh-805909",
+    "source": "Báo Quân đội nhân dân",
+    "date": "8 thg 12, 2024",
+    "sentiment": "positive",
+    "sentiment_score": 0.6
+  },
+  {
+    "title": "Vì sao taxi Mai Linh bị chấm dứt hoạt động tại sân bay Cam Ranh?",
+    "description": "Thực hư thông tin du khách Hàn Quốc bị móc túi xách mất 50 triệu ở sân bay Cam Ranh. Theo vị này, từ ngày 1-1-2025, cảng hàng không quốc tế Cam...",
+    "link": "https://tuoitre.vn/vi-sao-taxi-mai-linh-bi-cham-dut-hoat-dong-tai-san-bay-cam-ranh-20241226085122974.htm",
+    "source": "Báo Tuổi Trẻ",
+    "date": "26 thg 12, 2024",
+    "sentiment": "negative",
+    "sentiment_score": -0.5
+  },
+  {
+    "title": "Thực hư việc Mai Linh mua xe điện VinFast VF3 chạy taxi, giá cước rẻ hơn cả xe ôm?",
+    "description": "Trên mạng xã hội còn xuất hiện mức giá taxi chạy bằng xe VF3 chỉ 9.000 đồng/km. Trường hợp khách đi đường dài, giá chỉ còn khoảng 6.000 đồng/km...",
+    "link": "https://nld.com.vn/thuc-hu-viec-mai-linh-mua-xe-dien-vinfast-vf3-chay-taxi-gia-cuoc-re-hon-ca-xe-om-1962410221053052.htm",
+    "source": "Báo Người Lao Động",
+    "date": "22 thg 10, 2024",
+    "sentiment": "positive",
+    "sentiment_score": 0.4
+  },
+  {
+    "title": "Pha quay xe của taxi Mai Linh với xe điện",
+    "description": "Trên các phương tiện truyền thông, dù Mai Linh vẫn nói không với xe điện, nhưng chỉ ba tháng sau đó, hãng taxi này lại âm thầm tiếp xúc Tập đoàn...",
+    "link": "https://theleader.vn/pha-quay-xe-cua-taxi-mai-linh-voi-xe-dien-d38284.html",
+    "source": "TheLEADER",
+    "date": "7 thg 12, 2024",
+    "sentiment": "neutral",
+    "sentiment_score": 0.0
+  },
+  {
+    "title": "Tập đoàn Mai Linh rút bớt loạt ô tô thế chấp ngân hàng",
+    "description": "Từ đầu năm 2024, Tập đoàn Mai Linh liên tục rút bớt loạt xe ô tô thế chấp tại ngân hàng. Hãng taxi lâu đời này vừa ký kết hợp tác với Xanh...",
+    "link": "https://cafef.vn/tap-doan-mai-linh-rut-bot-loat-o-to-the-chap-ngan-hang-188250114125025943.chn",
+    "source": "CafeF",
+    "date": "14 thg 1, 2025",
+    "sentiment": "neutral",
+    "sentiment_score": 0.0
+  },
+  {
+    "title": "Chấm dứt hoạt động của 1 hãng Taxi trong sân bay Cam Ranh vì nợ gần 300 triệu",
+    "description": "(PLO)- Taxi Mai Linh chấm dứt hoạt động trong sân bay quốc tế Cam Ranh, tỉnh Khánh Hòa vì nợ Cảng hàng không quốc tế Cam Ranh gần 300 triệu...",
+    "link": "https://plo.vn/cham-dut-hoat-dong-cua-1-hang-taxi-trong-san-bay-cam-ranh-vi-no-gan-300-trieu-post826808.html",
+    "source": "Báo Pháp Luật TP. Hồ Chí Minh",
+    "date": "25 thg 12, 2024",
+    "sentiment": "negative",
+    "sentiment_score": -0.8
+  },
+  {
+    "title": "Từ 'chê' xe điện đến ký hợp đồng 4.000 xe VinFast: Công ty của tỷ phú Phạm Nhật Vượng đã làm gì để thuyết phục Taxi Mai Linh?",
+    "description": "Taxi Mai Linh đặt bút ký vào bản hợp đồng thuê và mua gần 4.000 xe VinFast để chạy dịch vụ không lâu sau chiến lược chưa đầu tư xe điện.",
+    "link": "https://nguoiquansat.vn/tu-che-xe-dien-den-ky-hop-dong-4-000-xe-vinfast-cong-ty-cua-ty-phu-pham-nhat-vuong-da-lam-gi-de-thuyet-phuc-taxi-mai-linh-182721.html",
+    "source": "nguoiquansat.vn",
+    "date": "7 thg 12, 2024",
+    "sentiment": "positive",
+    "sentiment_score": 0.4
+  },
+  {
+    "title": "Xanh SM bắt tay taxi Mai Linh lập chuỗi xưởng sửa chữa ô tô lớn nhất Việt Nam",
+    "description": "Xanh SM bắt tay taxi Mai Linh lập chuỗi xưởng sửa chữa ô tô lớn nhất Việt Nam ... Dự kiến đến cuối năm 2025, Xanh SM cùng Mai Linh sẽ sở hữu 99...",
+    "link": "https://thitruongtaichinhtiente.vn/xanh-sm-bat-tay-taxi-mai-linh-lap-chuoi-xuong-sua-chua-o-to-lon-nhat-viet-nam-62575.html",
+    "source": "thitruongtaichinhtiente.vn",
+    "date": "13 thg 9, 2024",
+    "sentiment": "positive",
+    "sentiment_score": 0.6
+  },
+  {
+    "title": "Mai Linh Nha Trang chỉ cam kết trả nợ cho 7 lao động trong quý I/2025",
+    "description": "Hàng chục tài xế taxi, nhân viên đã và đang làm việc tại Công ty TNHH Mai Linh Nha Trang đang bị nợ lương, nợ Bảo hiểm Xã hội (BHXH).",
+    "link": "https://laodong.vn/cong-doan/mai-linh-nha-trang-chi-cam-ket-tra-no-cho-7-lao-dong-trong-quy-i2025-1452427.ldo",
+    "source": "Laodong.vn",
+    "date": "20 thg 1, 2025",
+    "sentiment": "neutral",
+    "sentiment_score": 0.0
+  },
+  {
+    "title": "Xanh SM và Mai Linh mở chuỗi xưởng dịch vụ sửa chữa ô tô lớn nhất nước",
+    "description": "Công ty CP Di chuyển Xanh và Thông minh GSM cùng Công ty CP Thương mại Mê Kông Xanh (công ty con thuộc hệ sinh thái Mai Linh Group) vừa ký...",
+    "link": "https://thanhnien.vn/xanh-sm-va-mai-linh-mo-chuoi-xuong-dich-vu-sua-chua-o-to-lon-nhat-nuoc-1852409131401501.htm",
+    "source": "Báo Thanh Niên",
+    "date": "13 thg 9, 2024",
+    "sentiment": "positive",
+    "sentiment_score": 0.6
+  },
+  {
+    "title": "Taxi Mai Linh mua và thuê gần 4.000 xe điện VinFast từ GSM",
+    "description": "Với sự hỗ trợ từ Xanh SM, Mai Linh sẽ nhận được các ưu đãi tài chính trong quá trình đầu tư xe điện và được hỗ trợ lắp đặt trạm sạc thông qua...",
+    "link": "https://cafef.vn/taxi-mai-linh-mua-va-thue-gan-4000-xe-dien-vinfast-tu-gsm-188241206155758137.chn",
+    "source": "CafeF",
+    "date": "6 thg 12, 2024",
+    "sentiment": "positive",
+    "sentiment_score": 0.4
+  },
+  {
+    "title": "3.999 xe điện: Thương vụ hợp tác với Xanh SM và cú “quay xe” bất ngờ của taxi Mai Linh",
+    "description": "Ngày 6/12/2024, Tập đoàn Mai Linh chính thức ký kết hợp tác với Xanh SM, đầu tư 3.999 xe điện VinFast từ nay đến cuối năm 2025. Đây là bước...",
+    "link": "https://nguoiquansat.vn/3-999-xe-dien-thuong-vu-hop-tac-voi-xanh-sm-va-cu-quay-xe-bat-ngo-cua-taxi-mai-linh-182813.html",
+    "source": "nguoiquansat.vn",
+    "date": "8 thg 12, 2024",
+    "sentiment": "positive",
+    "sentiment_score": 0.4
+  },
+  {
+    "title": "Xanh SM hợp tác Mai Linh lập chuỗi sửa chữa ô tô lớn nhất Việt Nam",
+    "description": "Ngày 12-9, Xanh SM - hãng taxi điện của tỉ phú Phạm Nhật Vượng và Mai Linh Group đã chính thức hợp tác để xây dựng chuỗi sửa chữa ô tô lớn...",
+    "link": "https://tuoitre.vn/xanh-sm-hop-tac-mai-linh-lap-chuoi-sua-chua-o-to-lon-nhat-viet-nam-20240914090553183.htm",
+    "source": "Báo Tuổi Trẻ",
+    "date": "14 thg 9, 2024",
+    "sentiment": "positive",
+    "sentiment_score": 0.6
+  },
+  {
+    "title": "Tài xế taxi khốn khổ vì bị nợ lương, nợ BHXH",
+    "description": "Khánh Hòa - Cả trăm lao động đã và đang làm việc cho Công ty TNHH Mai Linh Nha Trang bị nợ lương và nợ bảo hiểm xã hội gần 8 tỉ đồng.",
+    "link": "https://laodong.vn/cong-doan/tai-xe-taxi-khon-kho-vi-bi-no-luong-no-bhxh-1446889.ldo",
+    "source": "Laodong.vn",
+    "date": "8 thg 1, 2025",
+    "sentiment": "negative",
+    "sentiment_score": -0.6
+  },
+  {
+    "title": "Taxi Mai Linh mua và thuê gần 4.000 ô tô điện VinFast từ GSM",
+    "description": "Ngày 6/12/2024, Tập đoàn Mai Linh chính thức ký kết hợp tác với Xanh SM, đầu tư 3.999 xe điện VinFast từ nay đến cuối năm 2025. ... Đội xe điện...",
+    "link": "https://cafef.vn/taxi-mai-linh-mua-va-thue-gan-4000-o-to-dien-vinfast-tu-gsm-188241206155611123.chn",
+    "source": "CafeF",
+    "date": "6 thg 12, 2024",
+    "sentiment": "neutral",
+    "sentiment_score": 0.0
+  },
+  {
+    "title": "Mai Linh Nha Trang hứa trả nợ lương, BHXH trong quý 1.2025",
+    "description": "Khánh Hòa - Liên quan đến nợ lương , nợ BHXH của nhiều lao động, Công ty TNHH Mai Linh Nha Trang vừa có văn bản gửi UBND tỉnh Khánh Hòa báo...",
+    "link": "https://laodong.vn/cong-doan/mai-linh-nha-trang-hua-tra-no-luong-bhxh-trong-quy-12025-1452082.ldo",
+    "source": "Laodong.vn",
+    "date": "19 thg 1, 2025",
+    "sentiment": "positive",
+    "sentiment_score": 0.5
+  },
+  {
+    "title": "Ông chủ đứng sau Tập đoàn bắt tay với hãng taxi của tỷ phú Phạm Nhật Vượng là ai?",
+    "description": "0CHIA SẺ. Hãng taxi của ông Phạm Nhật Vượng 'bắt tay' với Mai Linh thành lập chuỗi sửa xe quy mô lớn hàng đầu Việt Nam, tặng thêm 5,5 tỷ cho...",
+    "link": "https://cafef.vn/ong-chu-dung-sau-tap-doan-bat-tay-voi-hang-taxi-cua-ty-phu-pham-nhat-vuong-la-ai-188240917144536659.chn",
+    "source": "CafeF",
+    "date": "17 thg 9, 2024",
+    "sentiment": "neutral",
+    "sentiment_score": 0.0
+  },
+  {
+    "title": "Xuất hiện chiếc VinFast VF 3 đầu tiên của ông Phạm Nhật Vượng chạy dịch vụ taxi Mai Linh?",
+    "description": "Đối tác đặt mua xe điện mini VinFast VF 3 để chạy taxi ngày càng tăng. Ngày 17/10, trên trang của thương hiệu Mai Linh chi nhánh khu vực Sơn La...",
+    "link": "https://cafef.vn/xuat-hien-chiec-vinfast-vf-3-dau-tien-cua-ong-pham-nhat-vuong-chay-dich-vu-taxi-mai-linh-188241021151209482.chn",
+    "source": "CafeF",
+    "date": "21 thg 10, 2024",
+    "sentiment": "positive",
+    "sentiment_score": 0.6
+  },
+  {
+    "title": "Nhóm đối tượng người Trung Quốc sát hại, phi tang thi thể tài xế taxi Mai Linh",
+    "description": "Anh Hải là nhân viên lái xe taxi Mai Linh tại tỉnh Quảng Ninh. Anh được các đối tượng Huang Jie Cheng, Luo Shi Jun, Gan Ying thuê vào lúc khoảng...",
+    "link": "https://nld.com.vn/nhom-doi-tuong-nguoi-trung-quoc-sat-hai-phi-tang-thi-the-tai-xe-taxi-mai-linh-196240729181422409.htm",
+    "source": "Báo Người Lao Động",
+    "date": "29 thg 7, 2024",
+    "sentiment": "negative",
+    "sentiment_score": -0.8
+  }
+]
