@@ -798,7 +798,8 @@
                 body: JSON.stringify({
                     query: query,
                     time_filter: timeFilter,
-                    max_results: maxResults
+                    max_results: maxResults,
+                    analyzer_type: analyzerType
                 })
             })
             .then(response => response.json())
@@ -856,17 +857,79 @@
             // Update stats
             resultStats.textContent = `Tìm thấy ${results.length} kết quả`;
             
+            // Tạo các phần tử kết quả nếu chưa tồn tại
+            let searchResults = document.getElementById('searchResults');
+            if (!searchResults) {
+                searchResults = document.createElement('div');
+                searchResults.id = 'searchResults';
+                searchResults.className = 'row';
+                
+                // Tạo các cột cho từng loại sentiment
+                const columns = [
+                    { id: 'positiveResults', title: 'Tích cực', icon: 'fa-smile', class: 'positive' },
+                    { id: 'neutralResults', title: 'Trung lập', icon: 'fa-meh', class: 'neutral' },
+                    { id: 'negativeResults', title: 'Tiêu cực', icon: 'fa-frown', class: 'negative' }
+                ];
+                
+                columns.forEach(col => {
+                    const column = document.createElement('div');
+                    column.className = 'col-md-4';
+                    column.innerHTML = `
+                        <div class="column-header ${col.class}">
+                            <i class="fas ${col.icon}"></i>
+                            <h4 class="mb-0">${col.title}</h4>
+                        </div>
+                        <div id="${col.id}"></div>
+                    `;
+                    searchResults.appendChild(column);
+                });
+                
+                // Chèn vào resultsSection
+                resultsSection.appendChild(searchResults);
+            }
+            
             // Clear previous results
-            document.getElementById('positiveResults').innerHTML = '';
-            document.getElementById('neutralResults').innerHTML = '';
-            document.getElementById('negativeResults').innerHTML = '';
+            const positiveResults = document.getElementById('positiveResults');
+            const neutralResults = document.getElementById('neutralResults');
+            const negativeResults = document.getElementById('negativeResults');
+            
+            if (positiveResults) positiveResults.innerHTML = '';
+            if (neutralResults) neutralResults.innerHTML = '';
+            if (negativeResults) negativeResults.innerHTML = '';
             
             // Update sentiment chart
             if (sentimentChart) {
                 sentimentChart.destroy();
             }
             
-            var ctx = document.getElementById('sentimentChart').getContext('2d');
+            // Tạo phần tử canvas nếu chưa tồn tại
+            let chartContainer = document.querySelector('.sentiment-chart');
+            if (!chartContainer) {
+                // Tạo card chứa biểu đồ
+                const chartCard = document.createElement('div');
+                chartCard.className = 'card mb-4';
+                chartCard.innerHTML = `
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Phân bố cảm xúc</h5>
+                        <div class="sentiment-chart">
+                            <canvas id="sentimentChart"></canvas>
+                        </div>
+                    </div>
+                `;
+                
+                // Chèn card vào trước phần tử searchResults
+                resultsSection.insertBefore(chartCard, searchResults);
+                
+                chartContainer = document.querySelector('.sentiment-chart');
+            }
+            
+            var ctx = document.getElementById('sentimentChart');
+            if (!ctx) {
+                console.error('Không tìm thấy phần tử canvas cho biểu đồ');
+                return;
+            }
+            
+            ctx = ctx.getContext('2d');
             
             // Chuẩn bị dữ liệu cho biểu đồ
             var dates = results.map(r => r.date ? r.date.toString() : '');
@@ -953,7 +1016,12 @@
                 `;
                 
                 // Thêm vào cột tương ứng
-                document.getElementById(result.sentiment + 'Results').innerHTML += cardHtml;
+                const targetElement = document.getElementById(result.sentiment + 'Results');
+                if (targetElement) {
+                    targetElement.innerHTML += cardHtml;
+                } else {
+                    console.error(`Không tìm thấy phần tử cho sentiment: ${result.sentiment}`);
+                }
             });
         }
     });

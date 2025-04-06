@@ -46,14 +46,23 @@ def search():
     query = data.get('query', '').strip()
     time_filter = data.get('time_filter', 'all')
     max_results = int(data.get('max_results', '20'))
+    analyzer_type = data.get('analyzer_type', 'openai')
     
     # Get history for all responses
     history = get_search_history()
     
-    # Log the received query for debugging
+    # Log the received query and analyzer type for debugging
     logger.info(f"Received search query: '{query}'")
+    logger.info(f"Using analyzer type: {analyzer_type}")
+    logger.info(f"Current analyzer in factory: {sentiment_factory.get_current_analyzer_type()}")
     
     try:
+        # Cập nhật analyzer type cho cả factory và news service
+        sentiment_factory.set_analyzer_type(AnalyzerType(analyzer_type))
+        news_service.set_analyzer_type(AnalyzerType(analyzer_type))
+        logger.info(f"Updated analyzer type to: {analyzer_type}")
+        logger.info(f"Current analyzer in factory after update: {sentiment_factory.get_current_analyzer_type()}")
+        
         logger.info(f"Processing search request for: {query}")
         results = news_service.search(query, time_filter, max_results)
         
