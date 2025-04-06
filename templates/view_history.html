@@ -31,10 +31,26 @@
             width: 300px;
         }
         
-        .history-sidebar.collapsed {
-            transform: translateX(-300px);
+        .history-sidebar .list-group-item {
+            border: none;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
         }
 
+        .history-sidebar .list-group-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .history-sidebar .list-group-item.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .history-sidebar .list-group-item.active small {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
         .history-toggle {
             position: fixed;
             left: 300px;

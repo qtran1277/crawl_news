@@ -16,9 +16,14 @@ from webdriver_manager.firefox import GeckoDriverManager
 import time
 from urllib.parse import urlparse, parse_qs
 from openai import OpenAI
-from database import init_db, save_search_results, get_search_history, get_search_results, delete_search_history, get_api_key, save_api_key
+from database import init_db, save_search_results, get_search_history, get_search_results, delete_search_history
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from app.services.sentiment_factory import SentimentAnalyzerFactory, AnalyzerType
+from dotenv import load_dotenv
+from app.routes.views import bp as views_bp
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -33,6 +38,9 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # For session management
+
+# Register blueprints
+app.register_blueprint(views_bp)
 
 # Initialize sentiment analyzer factory
 sentiment_factory = SentimentAnalyzerFactory()
@@ -349,232 +357,16 @@ def generate_report(company_name, results):
     
     return report_filename, json_filename
 
-@app.route('/')
-def index():
-    # Get search history
-    history = get_search_history()
-    logger.info("Rendering index template with history")
-    try:
-        template_path = os.path.join(app.template_folder, 'index.html')
-        logger.info(f"Template path: {template_path}")
-        logger.info(f"Template exists: {os.path.exists(template_path)}")
-        return render_template('index.html', history=history)
-    except Exception as e:
-        logger.error(f"Error rendering template: {str(e)}")
-        return str(e), 500
-
-@app.route('/settings')
-def settings():
-    """Render API settings page"""
-    # Lấy API key từ database
-    current_api_key = get_api_key('openai')
-    return render_template('settings.html', api_key=current_api_key)
-
-@app.route('/save_settings', methods=['POST'])
-def save_settings():
-    """Save API settings"""
-    try:
-        api_key = request.form.get('api_key')
-        
-        if not api_key:
-            flash('API key không được để trống', 'danger')
-            return redirect(url_for('settings'))
-            
-        # Kiểm tra định dạng API key
-        if not api_key.startswith('sk-'):
-            flash('API key không đúng định dạng. API key phải bắt đầu bằng "sk-"', 'danger')
-            return redirect(url_for('settings'))
-        
-        # Lưu API key vào database
-        if save_api_key('openai', api_key):
-            # Kiểm tra kết nối với API key mới
-            client = get_openai_client()
-            if client:
-                try:
-                    response = client.chat.completions.create(
-                        model="gpt-3.5-turbo",
-                        messages=[{"role": "user", "content": "Hello"}],
-                        max_tokens=5
-                    )
-                    flash('Cài đặt đã được lưu và kết nối thành công', 'success')
-                except Exception as e:
-                    logger.error(f"Error testing API key: {str(e)}")
-                    flash('API key đã được lưu nhưng không thể kết nối. Vui lòng kiểm tra lại API key.', 'warning')
-            else:
-                flash('Cài đặt đã được lưu thành công', 'success')
-        else:
-            flash('Có lỗi xảy ra khi lưu cài đặt', 'danger')
-            return redirect(url_for('settings'))
-        
-        return redirect(url_for('index'))
-        
-    except Exception as e:
-        logger.error(f"Error saving settings: {str(e)}")
-        flash('Có lỗi xảy ra khi lưu cài đặt', 'danger')
-        return redirect(url_for('settings'))
-
-@app.route('/analyzer_settings')
-def analyzer_settings():
-    """Render analyzer settings page"""
-    # Get current analyzer type from session or use default
-    current_analyzer = session.get('analyzer_type', DEFAULT_ANALYZER.value)
-    
-    # Check OpenAI connection
-    openai_status = False
-    try:
-        # Get OpenAI client
-        client = get_client(AnalyzerType.OPENAI.value)
-        if client:
-            # Try a simple API call to check connection
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": "Hello"}],
-                max_tokens=5
-            )
-            openai_status = True
-    except Exception as e:
-        logger.error(f"OpenAI connection error: {str(e)}")
-    
-    # Check LM Studio connection
-    local_status = False
-    try:
-        # Get local client
-        client = get_client(AnalyzerType.LOCAL.value)
-        if client:
-            # Try a simple API call to check connection
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": "Hello"}],
-                max_tokens=5
-            )
-            local_status = True
-    except Exception as e:
-        logger.error(f"LM Studio connection error: {str(e)}")
-    
-    return render_template(
-        'analyzer_settings.html',
-        current_analyzer=current_analyzer,
-        openai_status=openai_status,
-        local_status=local_status
-    )
-
-@app.route('/save_analyzer_settings', methods=['POST'])
-def save_analyzer_settings():
-    """Save analyzer settings"""
-    try:
-        analyzer_type = request.form.get('analyzer_type')
-        
-        if analyzer_type not in [AnalyzerType.OPENAI.value, AnalyzerType.LOCAL.value]:
-            return jsonify({'error': 'Loại analyzer không hợp lệ'}), 400
-        
-        # Save to session
-        session['analyzer_type'] = analyzer_type
-        
-        # Update factory
-        sentiment_factory.set_analyzer_type(AnalyzerType(analyzer_type))
-        
-        return jsonify({'message': 'Cài đặt đã được lưu thành công'})
-        
-    except Exception as e:
-        logger.error(f"Error saving analyzer settings: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/search', methods=['POST'])
-def search():
-    try:
-        data = request.get_json()
-        query = data.get('query')
-        time_filter = data.get('time_filter', 'all')
-        max_results = int(data.get('max_results', 20))
-        analyzer_type = data.get('analyzer_type', AnalyzerType.OPENAI.value)
-        
-        if not query:
-            return jsonify({'error': 'Vui lòng nhập từ khóa tìm kiếm'}), 400
-            
-        # Tìm kiếm tin tức
-        results = search_news(query, time_filter, max_results)
-        
-        # Lưu kết quả vào database
-        search_id = save_search_results(query, results)
-        
-        return jsonify({
-            'results': results,
-            'search_id': search_id
-        })
-        
-    except Exception as e:
-        logger.error(f"Error in search: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/view_history/<int:search_id>')
-def view_history(search_id):
-    """View historical search results"""
-    try:
-        # Get current search results
-        data = get_search_results(search_id)
-        if not data:
-            flash('Không tìm thấy kết quả tìm kiếm', 'warning')
-            return redirect(url_for('index'))
-            
-        # Get all search history
-        history = get_search_history()
-        
-        # Parse the results JSON
-        articles = json.loads(data['results'])
-        
-        # Add articles count to history items
-        for item in history:
-            if item['id'] == search_id:
-                item['articles'] = articles
-            else:
-                # Get articles count for other history items
-                other_data = get_search_results(item['id'])
-                if other_data:
-                    item['articles'] = json.loads(other_data['results'])
-                else:
-                    item['articles'] = []
-        
-        return render_template('view_history.html', 
-                             results=articles,
-                             history=history,
-                             current_search_id=search_id)
-        
-    except Exception as e:
-        logger.error(f"Error viewing history: {str(e)}")
-        flash('Có lỗi xảy ra khi xem lịch sử', 'danger')
-        return redirect(url_for('index'))
-
-@app.route('/delete_history/<int:search_id>')
-def delete_history(search_id):
-    """Delete historical search results"""
-    try:
-        delete_search_history(search_id)
-        flash('Đã xóa kết quả tìm kiếm thành công', 'success')
-    except Exception as e:
-        logger.error(f"Error deleting history: {str(e)}")
-        flash('Có lỗi xảy ra khi xóa lịch sử', 'danger')
-        
-    return redirect(url_for('index'))
-
 def get_openai_client():
-    """Get OpenAI client with current configuration"""
+    """Get OpenAI client with API key from database"""
     try:
-        # Lấy API key từ database
         api_key = get_api_key('openai')
-        logger.info(f"API key from database: {api_key[:30] if api_key else 'None'}...")
-        
-        # Kiểm tra nếu không có API key
         if not api_key:
-            logger.error("No API key found in database")
+            logger.warning("OpenAI API key not found in database")
             return None
-            
-        # Tạo client với base URL mặc định là OpenAI
-        return OpenAI(
-            api_key=api_key,
-            base_url="https://api.openai.com/v1"
-        )
+        return OpenAI(api_key=api_key)
     except Exception as e:
-        logger.error(f"Error creating OpenAI client: {str(e)}")
+        logger.error(f"Error getting OpenAI client: {str(e)}")
         return None
 
 def get_local_client():
@@ -615,5 +407,7 @@ def get_client(analyzer_type=None):
         return None
 
 if __name__ == '__main__':
+    # Initialize database
     init_db()
+    # Run the app
     app.run(debug=True) 

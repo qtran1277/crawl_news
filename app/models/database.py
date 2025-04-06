@@ -70,16 +70,27 @@ def save_search_results(search_term, articles):
         conn.close()
 
 def get_search_history():
+    logger.info("Getting search history from database")
     db = get_db()
     cursor = db.cursor()
+    logger.info("Executing SQL query")
     cursor.execute('''
     SELECT id, search_term, search_time
     FROM searches
     ORDER BY search_time DESC
     LIMIT 50
     ''')
-    history = cursor.fetchall()
-    db.close()
+    rows = cursor.fetchall()
+    logger.info(f"Raw rows from database: {rows}")
+    history = []
+    for row in rows:
+        history.append({
+            'id': row['id'],
+            'search_term': row['search_term'],
+            'search_time': row['search_time']
+        })
+    logger.info(f"Processed history: {history}")
+    logger.info(f"History length: {len(history)}")
     return history
 
 def get_search_results(search_id):
@@ -143,4 +154,53 @@ def get_all_api_keys():
     c.execute("SELECT provider, api_key, timestamp FROM api_keys ORDER BY provider")
     keys = c.fetchall()
     conn.close()
-    return keys 
+    return keys
+
+def save_analyzer_settings(analyzer_type):
+    """Save analyzer settings to database"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Kiểm tra xem bảng settings đã tồn tại chưa
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+        ''')
+        
+        # Lưu hoặc cập nhật cài đặt
+        cursor.execute('''
+            INSERT OR REPLACE INTO settings (key, value)
+            VALUES (?, ?)
+        ''', ('sentiment_analyzer', analyzer_type))
+        
+        db.commit()
+        return True
+    except Exception as e:
+        logger.error(f"Error saving analyzer settings: {e}")
+        return False
+
+def get_analyzer_settings():
+    """Get analyzer settings from database"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Kiểm tra xem bảng settings đã tồn tại chưa
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+        ''')
+        
+        # Lấy cài đặt
+        cursor.execute('SELECT value FROM settings WHERE key = ?', ('sentiment_analyzer',))
+        result = cursor.fetchone()
+        
+        return result[0] if result else 'openai'  # Mặc định là openai nếu chưa có cài đặt
+    except Exception as e:
+        logger.error(f"Error getting analyzer settings: {e}")
+        return 'openai'  # Trả về giá trị mặc định nếu có lỗi 

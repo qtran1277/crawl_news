@@ -72,6 +72,57 @@
             width: 300px;
         }
         
+        .history-sidebar .list-group-item {
+            border: none;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+
+        .history-sidebar .list-group-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .history-sidebar .list-group-item a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .history-sidebar .list-group-item .btn-danger {
+            background-color: transparent;
+            border: none;
+            color: #dc3545;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .history-sidebar .list-group-item .btn-danger:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .history-sidebar .list-group-item.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .history-sidebar .list-group-item.active a {
+            color: white;
+        }
+
+        .history-sidebar .list-group-item.active .btn-danger {
+            color: white;
+        }
+
+        .history-sidebar .list-group-item.active .btn-danger:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .history-sidebar .list-group-item.active small {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
         .history-sidebar.collapsed {
             transform: translateX(-300px);
         }
@@ -337,25 +388,28 @@
                 <h4 class="mb-4">Lịch sử tìm kiếm</h4>
                 <!-- Search History -->
                 <div class="list-group mb-4">
-                    {% for item in history %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <a href="{{ url_for('view_history', search_id=item.id) }}" class="text-decoration-none">
-                            <div>
-                                <strong>{{ item.search_term }}</strong>
-                                <br>
-                                <small class="text-muted">
-                                    <i class="far fa-calendar"></i> {{ item.search_time.strftime('%d/%m/%Y') }}
-                                    <i class="far fa-clock ms-2"></i> {{ item.search_time.strftime('%H:%M:%S') }}
-                                </small>
+                    {% if history %}
+                        {% for item in history %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('main.view_history', search_id=item.id) }}" class="text-decoration-none">
+                                    <div>
+                                        <strong>{{ item.search_term }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="far fa-calendar"></i> {{ item.search_time }}
+                                        </small>
+                                    </div>
+                                </a>
+                                <a href="{{ url_for('main.delete_history', search_id=item.id) }}"
+                                   class="btn btn-sm btn-danger"
+                                   onclick="return confirm('Bạn có chắc muốn xóa mục này?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
                             </div>
-                        </a>
-                        <a href="{{ url_for('delete_history', search_id=item.id) }}" 
-                           class="btn btn-sm btn-danger"
-                           onclick="return confirm('Bạn có chắc muốn xóa mục này?')">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                    </div>
-                    {% endfor %}
+                        {% endfor %}
+                    {% else %}
+                        <p>Không có lịch sử tìm kiếm</p>
+                    {% endif %}
                 </div>
             </div>
 
@@ -363,9 +417,6 @@
             <div class="col-md-9 main-content">
                 <div class="container mt-5">
                     <div class="settings-buttons">
-                        <a href="{{ url_for('settings') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-cog"></i> Cài đặt API
-                        </a>
                         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#analyzerSettingsModal">
                             <i class="fas fa-robot"></i> Cài đặt Analyzer
                         </button>
@@ -410,12 +461,19 @@
                     </form>
 
                     <!-- Results Section -->
-                    <div id="resultsSection" style="display: none;">
+                    <div id="resultsSection" style="display: {% if show_results %}block{% else %}none{% endif %};">
                         <div class="mb-4">
-                            <h3>Kết quả tìm kiếm</h3>
-                            <div id="resultStats" class="text-muted mb-3"></div>
+                            <h3>Kết quả tìm kiếm: {{ query }}</h3>
+                            <div id="resultStats" class="text-muted mb-3">
+                                {% if results %}
+                                    Tìm thấy {{ results|length }} kết quả
+                                {% else %}
+                                    Không tìm thấy kết quả nào
+                                {% endif %}
+                            </div>
                         </div>
 
+                        {% if results %}
                         <!-- Sentiment Distribution -->
                         <div class="card mb-4">
                             <div class="card-body">
@@ -434,7 +492,31 @@
                                     <i class="fas fa-smile"></i>
                                     <h4 class="mb-0">Tích cực</h4>
                                 </div>
-                                <div id="positiveResults"></div>
+                                <div id="positiveResults">
+                                    {% for result in results %}
+                                        {% if result.sentiment == 'positive' %}
+                                        <div class="card news-card mb-3">
+                                            <div class="card-body">
+                                                <span class="sentiment-badge sentiment-{{ result.sentiment }}">
+                                                    {{ result.sentiment_score }}
+                                                </span>
+                                                <h5 class="card-title">{{ result.title }}</h5>
+                                                <p class="card-text">{{ result.description }}</p>
+                                                <div class="source-date mb-3">
+                                                    <i class="fas fa-newspaper"></i> {{ result.source }}
+                                                    <span class="mx-2">•</span>
+                                                    <i class="far fa-clock"></i> {{ result.date }}
+                                                </div>
+                                                <div class="card-footer bg-transparent border-0">
+                                                    <a href="{{ result.link }}" target="_blank" class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-external-link-alt"></i> Đọc thêm
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
                             </div>
 
                             <!-- Neutral News Column -->
@@ -443,7 +525,31 @@
                                     <i class="fas fa-meh"></i>
                                     <h4 class="mb-0">Trung lập</h4>
                                 </div>
-                                <div id="neutralResults"></div>
+                                <div id="neutralResults">
+                                    {% for result in results %}
+                                        {% if result.sentiment == 'neutral' %}
+                                        <div class="card news-card mb-3">
+                                            <div class="card-body">
+                                                <span class="sentiment-badge sentiment-{{ result.sentiment }}">
+                                                    {{ result.sentiment_score }}
+                                                </span>
+                                                <h5 class="card-title">{{ result.title }}</h5>
+                                                <p class="card-text">{{ result.description }}</p>
+                                                <div class="source-date mb-3">
+                                                    <i class="fas fa-newspaper"></i> {{ result.source }}
+                                                    <span class="mx-2">•</span>
+                                                    <i class="far fa-clock"></i> {{ result.date }}
+                                                </div>
+                                                <div class="card-footer bg-transparent border-0">
+                                                    <a href="{{ result.link }}" target="_blank" class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-external-link-alt"></i> Đọc thêm
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
                             </div>
 
                             <!-- Negative News Column -->
@@ -452,9 +558,34 @@
                                     <i class="fas fa-frown"></i>
                                     <h4 class="mb-0">Tiêu cực</h4>
                                 </div>
-                                <div id="negativeResults"></div>
+                                <div id="negativeResults">
+                                    {% for result in results %}
+                                        {% if result.sentiment == 'negative' %}
+                                        <div class="card news-card mb-3">
+                                            <div class="card-body">
+                                                <span class="sentiment-badge sentiment-{{ result.sentiment }}">
+                                                    {{ result.sentiment_score }}
+                                                </span>
+                                                <h5 class="card-title">{{ result.title }}</h5>
+                                                <p class="card-text">{{ result.description }}</p>
+                                                <div class="source-date mb-3">
+                                                    <i class="fas fa-newspaper"></i> {{ result.source }}
+                                                    <span class="mx-2">•</span>
+                                                    <i class="far fa-clock"></i> {{ result.date }}
+                                                </div>
+                                                <div class="card-footer bg-transparent border-0">
+                                                    <a href="{{ result.link }}" target="_blank" class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-external-link-alt"></i> Đọc thêm
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -541,6 +672,67 @@
         var resultStats = document.getElementById('resultStats');
         var sentimentChart = null;
 
+        // Khởi tạo biểu đồ sentiment nếu có kết quả
+        {% if results %}
+        var ctx = document.getElementById('sentimentChart').getContext('2d');
+        
+        // Chuẩn bị dữ liệu cho biểu đồ
+        var dates = {{ results|map(attribute='date')|list|tojson }};
+        var scores = {{ results|map(attribute='sentiment_score')|list|tojson }};
+        var colors = {{ results|map(attribute='sentiment')|map('replace', 'positive', 'rgba(40, 167, 69, 0.7)')|map('replace', 'negative', 'rgba(220, 53, 69, 0.7)')|map('replace', 'neutral', 'rgba(108, 117, 125, 0.7)')|list|tojson }};
+        
+        // Tạo biểu đồ
+        sentimentChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Điểm sentiment',
+                    data: scores,
+                    backgroundColor: colors,
+                    borderColor: colors.map(color => color.replace('0.7', '1')),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Điểm sentiment'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Ngày tháng'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var result = {{ results|tojson }}[context.dataIndex];
+                                return [
+                                    `Tiêu đề: ${result.title}`,
+                                    `Điểm: ${result.sentiment_score}`,
+                                    `Cảm xúc: ${result.sentiment}`
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+
         // Lấy analyzer type từ localStorage nếu có
         const savedAnalyzerType = localStorage.getItem('analyzerType');
         if (savedAnalyzerType) {
@@ -590,7 +782,8 @@
             // Hiển thị loading overlay
             loadingOverlay.style.display = 'flex';
             
-            fetch('/search', {
+            // Send search request
+            fetch('{{ url_for("main.search") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -598,8 +791,7 @@
                 body: JSON.stringify({
                     query: query,
                     time_filter: timeFilter,
-                    max_results: maxResults,
-                    analyzer_type: analyzerType
+                    max_results: maxResults
                 })
             })
             .then(response => response.json())
@@ -609,6 +801,8 @@
                     return;
                 }
                 displayResults(data.results);
+                // Cập nhật lịch sử tìm kiếm
+                updateSearchHistory(data.history);
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -619,6 +813,34 @@
                 loadingOverlay.style.display = 'none';
             });
         });
+
+        // Hàm cập nhật lịch sử tìm kiếm
+        function updateSearchHistory(history) {
+            const historyList = document.querySelector('.list-group');
+            historyList.innerHTML = '';
+            
+            history.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                historyItem.innerHTML = `
+                    <a href="{{ url_for('main.view_history', search_id=0) }}".replace('0', item.id) class="text-decoration-none">
+                        <div>
+                            <strong>${item.search_term}</strong>
+                            <br>
+                            <small class="text-muted">
+                                <i class="far fa-calendar"></i> ${item.search_time}
+                            </small>
+                        </div>
+                    </a>
+                    <a href="{{ url_for('main.delete_history', search_id=0) }}".replace('0', item.id)
+                       class="btn btn-sm btn-danger"
+                       onclick="return confirm('Bạn có chắc muốn xóa mục này?')">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        }
 
         function displayResults(results) {
             // Show results section
@@ -714,9 +936,11 @@
                                 <span class="mx-2">•</span>
                                 <i class="far fa-clock"></i> ${result.date}
                             </div>
-                            <a href="${result.link}" target="_blank" class="btn btn-primary btn-sm">
-                                <i class="fas fa-external-link-alt"></i> Đọc thêm
-                            </a>
+                            <div class="card-footer bg-transparent border-0">
+                                <a href="${result.link}" target="_blank" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-external-link-alt"></i> Đọc thêm
+                                </a>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -740,31 +964,23 @@
         });
     });
 
-    // Save analyzer settings
+    // Lưu cài đặt analyzer
     function saveAnalyzerSettings() {
-        const form = document.getElementById('analyzerSettingsForm');
-        const formData = new FormData(form);
+        const analyzerType = document.querySelector('input[name="analyzer_type"]:checked').value;
         
-        // Lưu lựa chọn vào localStorage
-        const selectedAnalyzer = form.querySelector('input[name="analyzer_type"]:checked');
-        if (selectedAnalyzer) {
-            localStorage.setItem('analyzerType', selectedAnalyzer.value);
-        }
-        
-        fetch('/save_analyzer_settings', {
+        fetch('{{ url_for("main.handle_analyzer_settings") }}', {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `analyzer_type=${analyzerType}`
         })
-        .then(response => {
-            if (response.ok) {
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('analyzerSettingsModal'));
-                modal.hide();
-                
-                // Reload page to apply changes
-                window.location.reload();
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
             } else {
-                alert('Có lỗi xảy ra khi lưu cài đặt');
+                alert(data.message);
             }
         })
         .catch(error => {

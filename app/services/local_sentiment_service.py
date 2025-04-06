@@ -41,7 +41,8 @@ class LocalSentimentAnalyzer:
             prompt = f"""Analyze the sentiment of this Vietnamese news title: "{cleaned_title}"
             Classify it as one of: positive, negative, or neutral.
             Also provide a sentiment score from -1 (most negative) to 1 (most positive).
-            Format the response as JSON: {{"sentiment": "positive/negative/neutral", "score": float}}"""
+            Return ONLY a JSON object in this format: {{"sentiment": "positive/negative/neutral", "score": float}}
+            Do not include any explanation or additional text."""
             
             # Prepare the request payload
             payload = {
@@ -60,7 +61,19 @@ class LocalSentimentAnalyzer:
             
             # Parse response
             response_data = response.json()
-            result = eval(response_data['choices'][0]['message']['content'])
+            content = response_data['choices'][0]['message']['content']
+            
+            # Remove markdown formatting if present
+            if content.startswith('```json'):
+                content = content.replace('```json', '').replace('```', '').strip()
+            elif content.startswith('```'):
+                content = content.replace('```', '').strip()
+                
+            try:
+                result = json.loads(content)
+            except json.JSONDecodeError:
+                logger.error(f"Invalid JSON response from LM Studio: {content}")
+                return {"sentiment": "neutral", "score": 0}
             
             # Validate sentiment
             if result['sentiment'] not in ['positive', 'negative', 'neutral']:

@@ -5,16 +5,19 @@ from urllib.parse import urlparse, parse_qs
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import os
 
 from app.config import Config
 from app.utils.logger import logger
 from app.utils.webdriver import WebDriverManager
 from app.services.sentiment_factory import SentimentAnalyzerFactory, AnalyzerType
+from app.models.database import get_analyzer_settings
 
 class NewsService:
-    def __init__(self, analyzer_type=AnalyzerType.OPENAI):
-        """Initialize news service with specified analyzer type"""
-        self.sentiment_analyzer = SentimentAnalyzerFactory.get_analyzer(analyzer_type)
+    def __init__(self):
+        """Initialize news service with analyzer type from database"""
+        analyzer_type = get_analyzer_settings()
+        self.sentiment_analyzer = SentimentAnalyzerFactory.get_analyzer(AnalyzerType(analyzer_type))
         
     def set_analyzer_type(self, analyzer_type: AnalyzerType):
         """Change the sentiment analyzer type"""

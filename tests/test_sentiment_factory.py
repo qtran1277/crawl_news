@@ -1,7 +1,7 @@
 import unittest
-from unittest.mock import patch, Mock
-from app.services.sentiment_factory import SentimentAnalyzerFactory, AnalyzerType
-from app.services.sentiment_service import OpenAISentimentAnalyzer
+import pytest
+from unittest.mock import patch, Mock, MagicMock
+from app.services.sentiment_factory import SentimentAnalyzerFactory, AnalyzerType, OpenAISentimentAnalyzer
 from app.services.local_sentiment_service import LocalSentimentAnalyzer
 
 class TestSentimentAnalyzerFactory(unittest.TestCase):
