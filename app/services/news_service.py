@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import os
+import json
 
 from app.config import Config
 from app.utils.logger import logger
@@ -27,18 +28,17 @@ class NewsService:
         """Search for news articles"""
         logger.info(f"Starting search for: {query} with max_results: {max_results}")
         
-        driver = WebDriverManager.get_driver()
+        driver = None
         try:
+            driver = WebDriverManager.get_driver()
             articles_data = self._fetch_articles(driver, query, time_filter, max_results)
             return self._process_articles(articles_data)
         except Exception as e:
             logger.error(f"Error in search_news: {e}")
             raise
         finally:
-            try:
-                driver.quit()
-            except Exception as e:
-                logger.error(f"Error closing driver: {e}")
+            # Không đóng driver ở đây nữa, để WebDriverManager quản lý
+            pass
     
     def _fetch_articles(self, driver, query, time_filter, max_results):
         """Fetch articles from Google News"""
@@ -148,28 +148,24 @@ class NewsService:
         
         # Analyze sentiments for all titles
         if titles_to_analyze:
+            logger.info(f"Analyzing sentiments for {len(titles_to_analyze)} articles")
             sentiment_results = self.sentiment_analyzer.analyze_batch(titles_to_analyze)
+            logger.info(f"Received sentiment results: {json.dumps(sentiment_results, ensure_ascii=False)}")
             
             # Combine article data with sentiment results
             for article_data in articles_data:
                 title = article_data['title']
                 if title in sentiment_results:
-                    article_data['sentiment'] = sentiment_results[title]['sentiment']
-                    article_data['sentiment_score'] = sentiment_results[title]['score']
+                    sentiment_data = sentiment_results[title]
+                    article_data['sentiment'] = sentiment_data['sentiment']
+                    article_data['sentiment_score'] = sentiment_data['score']
+                    article_data['sentiment_explanation'] = sentiment_data.get('explanation', '')
                     results.append(article_data)
+                    logger.info(f"Added article with sentiment: {article_data['title']} - {article_data['sentiment']} ({article_data['sentiment_score']})")
         
         if not results:
             logger.warning("No valid articles found after processing")
-            # Add a default article if no valid results
-            results.append({
-                'title': 'Không tìm thấy kết quả',
-                'description': 'Không tìm thấy bài viết nào phù hợp với tìm kiếm của bạn.',
-                'link': '',
-                'source': 'System',
-                'date': '',
-                'sentiment': 'neutral',
-                'sentiment_score': 0
-            })
+            return []  # Return empty list instead of default article
         
         logger.info(f"Processed {len(results)} valid articles")
         return results

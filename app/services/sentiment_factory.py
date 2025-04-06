@@ -25,76 +25,74 @@ class OpenAISentimentAnalyzer(SentimentAnalyzerInterface):
         """Analyze sentiment of a single text using OpenAI API"""
         if not self.client:
             logger.error("OpenAI client not initialized. Please set API key first.")
-            return None
+            return {"sentiment": "neutral", "score": 0, "explanation": "API key not set"}
 
         try:
-            prompt = f"""Analyze the sentiment of the following Vietnamese text and return a JSON object with these fields:
+            prompt = f"""Analyze the sentiment of the following text and return a JSON object with these fields:
             - sentiment: "positive", "negative", or "neutral"
             - score: float between -1 and 1
+            - explanation: brief explanation of the analysis
             
-            Text: {text}
-            
-            Consider the context and nuance of Vietnamese language. For example:
-            - Positive: good news, achievements, success
-            - Negative: problems, issues, failures
-            - Neutral: factual statements, announcements
-            
-            Return ONLY the JSON object, no additional text."""
+            Text: {text}"""
 
+            logger.info(f"Sending request to OpenAI for text: {text[:50]}...")
+            
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,
                 max_tokens=150
             )
+            
+            logger.info(f"OpenAI raw response: {response.choices[0].message.content}")
 
             try:
                 result = json.loads(response.choices[0].message.content)
+                logger.info(f"OpenAI parsed result: {json.dumps(result, ensure_ascii=False)}")
+                
                 if not isinstance(result, dict):
-                    logger.error(f"Invalid response format: {response.choices[0].message.content}")
-                    return None
+                    raise ValueError("Response is not a dictionary")
                 
-                # Validate sentiment
+                # Validate and sanitize result
                 if "sentiment" not in result or result["sentiment"] not in ["positive", "negative", "neutral"]:
-                    logger.error(f"Invalid sentiment value: {result.get('sentiment')}")
-                    return None
+                    result["sentiment"] = "neutral"
                     
-                # Validate score
                 if "score" not in result or not isinstance(result["score"], (int, float)):
-                    logger.error(f"Invalid score value: {result.get('score')}")
-                    return None
+                    result["score"] = 0
+                else:
+                    result["score"] = max(-1, min(1, float(result["score"])))  # Clamp between -1 and 1
                     
-                # Ensure score is within range
-                result["score"] = max(min(float(result["score"]), 1.0), -1.0)
+                if "explanation" not in result or not isinstance(result["explanation"], str):
+                    result["explanation"] = "No explanation provided"
                 
+                logger.info(f"Final sentiment result: {json.dumps(result, ensure_ascii=False)}")
                 return result
                 
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse OpenAI response: {e}")
-                return None
-                
+            except (json.JSONDecodeError, ValueError, KeyError) as e:
+                logger.error(f"Error parsing OpenAI response: {str(e)}")
+                return {"sentiment": "neutral", "score": 0, "explanation": "Error parsing response"}
+
         except Exception as e:
-            logger.error(f"Error in sentiment analysis: {str(e)}")
-            return None
+            logger.error(f"Error analyzing sentiment with OpenAI: {str(e)}")
+            return {"sentiment": "neutral", "score": 0, "explanation": f"Error: {str(e)}"}
 
     def analyze_batch(self, texts, max_workers=5):
-        """Analyze sentiments for multiple texts concurrently"""
+        """Analyze sentiment for multiple texts in parallel"""
+        logger.info(f"Starting batch sentiment analysis for {len(texts)} texts")
         results = {}
-        
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Submit all tasks
             future_to_text = {executor.submit(self.analyze_single, text): text for text in texts}
-            
-            # Get results as they complete
             for future in as_completed(future_to_text):
                 text = future_to_text[future]
                 try:
                     result = future.result()
-                    if result:  # Only add valid results
-                        results[text] = result
+                    results[text] = result
+                    logger.info(f"Analyzed text: '{text[:50]}...' - Result: {json.dumps(result, ensure_ascii=False)}")
                 except Exception as e:
-                    logger.error(f"Error analyzing sentiment for text: {text[:50]}... Error: {str(e)}")
+                    logger.error(f"Error analyzing text '{text}': {str(e)}")
+                    results[text] = {"sentiment": "neutral", "score": 0, "explanation": f"Error: {str(e)}"}
         
+        logger.info(f"Completed batch analysis. Results: {json.dumps(results, ensure_ascii=False)}")
         return results
 
 class SentimentAnalyzerFactory:

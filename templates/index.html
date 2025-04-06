@@ -429,18 +429,18 @@
                     </div>
                     
                     <form id="searchForm" class="mb-4">
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="searchQuery" name="query" 
-                                   placeholder="Nhập từ khóa tìm kiếm..." required>
-                            <button class="btn btn-primary" type="submit">
-                                <i class="fas fa-search"></i> Tìm kiếm
-                            </button>
-                        </div>
-                        
-                        <div class="row">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="searchQuery" class="form-label">Từ khóa tìm kiếm:</label>
+                                    <input type="text" class="form-control" id="searchQuery" name="query" 
+                                           placeholder="Nhập từ khóa tìm kiếm..." required>
+                                </div>
+                            </div>
+                            
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="timeFilter">Thời gian:</label>
+                                    <label for="timeFilter" class="form-label">Thời gian:</label>
                                     <select class="form-select" id="timeFilter" name="time_filter">
                                         <option value="all">Tất cả</option>
                                         <option value="1h">1 giờ qua</option>
@@ -450,12 +450,19 @@
                                     </select>
                                 </div>
                             </div>
+                            
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="maxResults">Số kết quả tối đa:</label>
+                                    <label for="maxResults" class="form-label">Số kết quả tối đa:</label>
                                     <input type="number" class="form-control" id="maxResults" 
                                            name="max_results" value="20" min="1" max="100">
                                 </div>
+                            </div>
+                            
+                            <div class="col-12 text-center mt-3">
+                                <button class="btn btn-primary btn-lg" type="submit">
+                                    <i class="fas fa-search"></i> Tìm kiếm
+                                </button>
                             </div>
                         </div>
                     </form>
