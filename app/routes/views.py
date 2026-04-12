@@ -3,7 +3,21 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, send_file, redirect, url_for, jsonify, flash, session
 from app.config import Config
 from app.utils.logger import logger
-from app.models.database import get_db, get_search_history, get_search_results, delete_search_history, save_search_results, get_api_key, save_api_key, save_analyzer_settings
+from app.models.database import (
+    get_db,
+    get_search_history,
+    get_search_results,
+    delete_search_history,
+    save_search_results,
+    get_api_key,
+    save_api_key,
+    save_analyzer_settings,
+    get_customers,
+    create_customer,
+    get_customer,
+    update_customer,
+    delete_customer,
+)
 from app.services.news_service import news_service
 from app.services.sentiment_factory import SentimentAnalyzerFactory, AnalyzerType
 from openai import OpenAI
@@ -21,6 +35,8 @@ def get_openai_client():
 
 # Create blueprint
 bp = Blueprint('main', __name__)
+
+CUSTOMER_STATUSES = ['lead', 'contacted', 'negotiating', 'won', 'lost']
 
 @bp.route('/')
 def index():
@@ -258,4 +274,79 @@ def handle_analyzer_settings():
         return jsonify({'message': 'Settings saved successfully'}), 200
     except Exception as e:
         logger.error(f"Error saving analyzer settings: {e}")
-        return jsonify({'error': str(e)}), 500 
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/customers')
+def customers():
+    """Render customer management page."""
+    keyword = request.args.get('keyword', '').strip()
+    status = request.args.get('status', 'all').strip()
+    customer_list = get_customers(keyword=keyword, status=status)
+
+    return render_template(
+        'customers.html',
+        customers=customer_list,
+        keyword=keyword,
+        status=status,
+        statuses=CUSTOMER_STATUSES
+    )
+
+
+@bp.route('/customers/create', methods=['POST'])
+def customers_create():
+    """Create customer record."""
+    full_name = request.form.get('full_name', '').strip()
+    if not full_name:
+        flash('Tên khách hàng là bắt buộc', 'danger')
+        return redirect(url_for('main.customers'))
+
+    create_customer(
+        full_name=full_name,
+        email=request.form.get('email', ''),
+        phone=request.form.get('phone', ''),
+        company=request.form.get('company', ''),
+        status=request.form.get('status', 'lead'),
+        notes=request.form.get('notes', '')
+    )
+    flash('Tạo khách hàng thành công', 'success')
+    return redirect(url_for('main.customers'))
+
+
+@bp.route('/customers/<int:customer_id>/edit', methods=['POST'])
+def customers_edit(customer_id):
+    """Update customer record."""
+    customer = get_customer(customer_id)
+    if not customer:
+        flash('Không tìm thấy khách hàng', 'danger')
+        return redirect(url_for('main.customers'))
+
+    full_name = request.form.get('full_name', '').strip()
+    if not full_name:
+        flash('Tên khách hàng là bắt buộc', 'danger')
+        return redirect(url_for('main.customers'))
+
+    update_customer(
+        customer_id=customer_id,
+        full_name=full_name,
+        email=request.form.get('email', ''),
+        phone=request.form.get('phone', ''),
+        company=request.form.get('company', ''),
+        status=request.form.get('status', 'lead'),
+        notes=request.form.get('notes', '')
+    )
+    flash('Cập nhật khách hàng thành công', 'success')
+    return redirect(url_for('main.customers'))
+
+
+@bp.route('/customers/<int:customer_id>/delete', methods=['POST'])
+def customers_delete(customer_id):
+    """Delete customer record."""
+    customer = get_customer(customer_id)
+    if not customer:
+        flash('Không tìm thấy khách hàng', 'danger')
+        return redirect(url_for('main.customers'))
+
+    delete_customer(customer_id)
+    flash('Xóa khách hàng thành công', 'success')
+    return redirect(url_for('main.customers'))
