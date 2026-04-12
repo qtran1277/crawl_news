@@ -40,7 +40,123 @@ def init_db():
         from werkzeug.security import generate_password_hash
         cursor.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
                       ('admin', generate_password_hash('admin123')))
+
+    # Create customers table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS customers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        full_name TEXT NOT NULL,
+        email TEXT,
+        phone TEXT,
+        company TEXT,
+        status TEXT NOT NULL DEFAULT 'lead',
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
     
+    db.commit()
+    db.close()
+
+
+def get_customers(keyword='', status='all'):
+    """Get customer list with optional keyword/status filters."""
+    db = get_db()
+    cursor = db.cursor()
+
+    query = '''
+    SELECT id, full_name, email, phone, company, status, notes, created_at, updated_at
+    FROM customers
+    WHERE 1 = 1
+    '''
+    params = []
+
+    if keyword:
+        query += '''
+        AND (
+            full_name LIKE ?
+            OR email LIKE ?
+            OR phone LIKE ?
+            OR company LIKE ?
+        )
+        '''
+        like_value = f'%{keyword}%'
+        params.extend([like_value, like_value, like_value, like_value])
+
+    if status != 'all':
+        query += ' AND status = ? '
+        params.append(status)
+
+    query += ' ORDER BY created_at DESC '
+    cursor.execute(query, params)
+
+    rows = cursor.fetchall()
+    db.close()
+
+    return [dict(row) for row in rows]
+
+
+def create_customer(full_name, email='', phone='', company='', status='lead', notes=''):
+    """Create a new customer record."""
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        '''
+        INSERT INTO customers (full_name, email, phone, company, status, notes)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ''',
+        (full_name.strip(), email.strip(), phone.strip(), company.strip(), status.strip(), notes.strip())
+    )
+    db.commit()
+    db.close()
+
+
+def get_customer(customer_id):
+    """Get one customer by id."""
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        '''
+        SELECT id, full_name, email, phone, company, status, notes, created_at, updated_at
+        FROM customers
+        WHERE id = ?
+        ''',
+        (customer_id,)
+    )
+    row = cursor.fetchone()
+    db.close()
+    return dict(row) if row else None
+
+
+def update_customer(customer_id, full_name, email='', phone='', company='', status='lead', notes=''):
+    """Update existing customer."""
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        '''
+        UPDATE customers
+        SET full_name = ?,
+            email = ?,
+            phone = ?,
+            company = ?,
+            status = ?,
+            notes = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        ''',
+        (full_name.strip(), email.strip(), phone.strip(), company.strip(), status.strip(), notes.strip(), customer_id)
+    )
+    db.commit()
+    db.close()
+
+
+def delete_customer(customer_id):
+    """Delete customer by id."""
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('DELETE FROM customers WHERE id = ?', (customer_id,))
     db.commit()
     db.close()
 
